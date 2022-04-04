@@ -11,12 +11,13 @@ let App = {
         await App.loadEvents()
     },
 
-    loadComponents: async () =>{
+    loadComponents: async () => {
         App.checkBalanceBtn = $("#checkBalanceBtn")
         App.balance = $("#balance")
         App.toAccountInput = $("#toAccountInput")
         App.numberOfTokensInput = $("#numberOfTokensInput")
         App.transferTokensBtn = $("#transferTokensBtn")
+        App.transferStatus = $("#transferStatus")
     },
 
     loadWeb3: async () => {
@@ -51,7 +52,7 @@ let App = {
         // Set the current blockchain account
         App.accounts = await web3.eth.getAccounts()
         App.account = App.accounts[0]
-        App.contractAddress = "0x2981a6343844E0f3dcE7D106532d1a0dd670ca10"
+        App.contractAddress = "0x7B3352619C20918494Fe4A0a88bbB44D7f98E668"
     },
 
     loadContract: async () => {
@@ -307,18 +308,39 @@ let App = {
                 "type": "function"
             }
         ]
-        App.contracts.ERCBasic20 = new web3.eth.Contract(App.contractABI,App.contractAddress);
+        App.contracts.ERCBasic20 = new web3.eth.Contract(App.contractABI, App.contractAddress);
     },
 
-    loadEvents: async() =>{
+    loadEvents: async () => {
         web3.eth.getBalance(App.account).then(console.log)
-        let test = await App.contracts.ERCBasic20.methods.test().call()
-
-        App.updateBalance(`Balance: ${test}`)
+        App.checkBalanceBtn.click(function () {
+            App.checkBalance()
+        })
+        App.transferTokensBtn.click(function () {
+            let to = App.toAccountInput.val()
+            let tokensNum = App.numberOfTokensInput.val()
+            let status = App.transferTokens(to, tokensNum)
+            App.updateStatus(`Transfer status ${status}`)
+        })
     },
 
-    updateBalance: (balance) =>{
-        App.balance.html(balance)
+    checkBalance: async () => {
+        let tokensBalance = await App.contracts.ERCBasic20.methods.balanceOf(App.account).call()
+        App.updateBalance(tokensBalance)
+    },
+
+    updateBalance: (balance) => {
+        App.balance.html(`Balance: ${balance}`)
+    },
+
+    transferTokens: async (toAccount, tokensNum) => {
+        const status = await App.contracts.ERCBasic20.methods.transfer(toAccount, tokensNum).send({from: App.account, value:343000000000000})
+        if(status) App.updateStatus(`Transferred: ${tokensNum}`)
+
+    },
+
+    updateStatus: (status) => {
+        App.transferStatus.html(`Transfer status: ${status}`)
     }
 
 }
