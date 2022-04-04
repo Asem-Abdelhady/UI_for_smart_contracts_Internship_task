@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>ERC20Basic</title>
+        <style>
+             label {
+                 display: block;
+             }
+        </style>
+    </head>
+    <body>
+        <h1>Sport Complex Coin</h1>
+        <div>
+            <button id="checkBalanceBtn">Check balance</button>
+            <p id="balance">Balance: </p>
+        </div>
+        <div>
+            <label for="toAccountInput">To Account</label><input id="toAccountInput">
+            <label for="numberOfTokensInput"># of tokens</label><input id="numberOfTokensInput">
+            <button id="transferTokensBtn">Transfer tokens</button>
+        </div>
+        <script src="node_modules/web3/dist/web3.min.js"></script>
+        <script src="node_modules/jquery/dist/jquery.slim.min.js"></script>
+        <script src="app.js"></script>
+    </body>
+</html>
