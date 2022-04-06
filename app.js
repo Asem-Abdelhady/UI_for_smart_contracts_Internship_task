@@ -13,7 +13,9 @@ let App = {
 
     loadComponents: async () => {
         App.checkBalanceBtn = $("#checkBalanceBtn")
+        App.getTokensBtn = $("#getTokensBtn")
         App.balance = $("#balance")
+        App.gettingToken = $("#getToken")
         App.toAccountInput = $("#toAccountInput")
         App.numberOfTokensInput = $("#numberOfTokensInput")
         App.transferTokensBtn = $("#transferTokensBtn")
@@ -23,15 +25,12 @@ let App = {
     loadWeb3: async () => {
         // Modern dapp browsers...
         if (window.ethereum) {
-            console.log("inside ethereum")
             window.web3 = new Web3(ethereum)
             try {
                 // Request account access if needed
                 await window.ethereum.enable()
-                // Acccounts now exposed
-                web3.eth.sendTransaction({/* ... */})
             } catch (error) {
-                // User denied account access...
+                console.log("User denied account access")
             }
         }
         // Legacy dapp browsers...
@@ -39,8 +38,6 @@ let App = {
             console.log("inside window")
             App.web3Provider = web3.currentProvider
             window.web3 = new Web3(web3.currentProvider)
-            // Acccounts always exposed
-            web3.eth.sendTransaction({/* ... */})
         }
         // Non-dapp browsers...
         else {
@@ -320,27 +317,50 @@ let App = {
             let to = App.toAccountInput.val()
             let tokensNum = App.numberOfTokensInput.val()
             let status = App.transferTokens(to, tokensNum)
-            App.updateStatus(`Transfer status ${status}`)
+        })
+        App.getTokensBtn.click(function () {
+            App.getToken()
         })
     },
 
-    checkBalance: async () => {
-        let tokensBalance = await App.contracts.ERCBasic20.methods.balanceOf(App.account).call()
-        App.updateBalance(tokensBalance)
+    getToken: async () => {
+        App.updateGettingToken("Waiting confirmation")
+        await App.contracts.ERCBasic20.methods.getCoin(App.account).send({from: App.account}).on('transactionHash', async function (hash) {
+            App.updateGettingToken("Confirmed, wait to be mined before checking balance")
+        }).on("error", async function (error) {
+            App.updateGettingToken("Rejected")
+        })
+
     },
 
-    updateBalance: (balance) => {
+    checkBalance: async () => {
+        await App.updateBalance("getting balance")
+        let tokensBalance = await App.contracts.ERCBasic20.methods.balanceOf(App.account).call()
+        await App.updateBalance(tokensBalance)
+    },
+
+    updateBalance: async (balance) => {
         App.balance.html(`Balance: ${balance}`)
     },
 
     transferTokens: async (toAccount, tokensNum) => {
-        const status = await App.contracts.ERCBasic20.methods.transfer(toAccount, tokensNum).send({from: App.account, value:343000000000000})
-        if(status) App.updateStatus(`Transferred: ${tokensNum}`)
-
+        App.updateTransferStatus("waiting confirmation")
+        await App.contracts.ERCBasic20.methods.transfer(toAccount, tokensNum).send({
+            from: App.account,
+            value: 343000000000000
+        }).on('transactionHash', async function (hash) {
+            App.updateTransferStatus("Confirmed, should take seconds to be mined. Wait before checking balance")
+        }).on("error", async function (error) {
+            App.updateTransferStatus("Rejected")
+        })
     },
 
-    updateStatus: (status) => {
+    updateTransferStatus: (status) => {
         App.transferStatus.html(`Transfer status: ${status}`)
+    },
+
+    updateGettingToken: (status) => {
+        App.gettingToken.html(`Getting 1 token: ${status}`)
     }
 
 }
